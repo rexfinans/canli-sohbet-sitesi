@@ -1,0 +1,83 @@
+cat << 'EOF' > index.html
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canlı Görüntülü Sohbet</title>
+  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background: #121212; color: #fff; text-align: center; padding: 20px; }
+    h1 { margin-bottom: 20px; color: #00e676; }
+    .controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+    input, button { padding: 12px 18px; border-radius: 8px; border: none; font-size: 16px; }
+    input { background: #222; color: #fff; border: 1px solid #444; }
+    button { background: #00e676; color: #000; font-weight: bold; cursor: pointer; }
+    #video-container { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+    .video-player { width: 320px; height: 240px; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid #00e676; }
+  </style>
+</head>
+<body>
+  <h1>🎥 Live Chat Online</h1>
+  <div class="controls">
+    <input type="text" id="channel-name" placeholder="Oda Adı Girin (örn: oda1)" value="sohbet1">
+    <button id="join-btn">Sohbete Katıl</button>
+    <button id="leave-btn" style="background: #ff5252; color: #fff; display: none;">Ayrıl</button>
+  </div>
+  <div id="video-container">
+    <div id="local-player" class="video-player"></div>
+  </div>
+
+  <script>
+    const APP_ID = "7f39766de7444811a842ddbd0efa95e4";
+    const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+    let localAudioTrack, localVideoTrack;
+
+    document.getElementById("join-btn").onclick = async () => {
+      const channel = document.getElementById("channel-name").value;
+      if (!channel) return alert("Lütfen bir oda adı girin!");
+
+      await client.join(APP_ID, channel, null, null);
+      localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+
+      localVideoTrack.play("local-player");
+      await client.publish([localAudioTrack, localVideoTrack]);
+
+      document.getElementById("join-btn").style.display = "none";
+      document.getElementById("leave-btn").style.display = "inline-block";
+    };
+
+    client.on("user-published", async (user, mediaType) => {
+      await client.subscribe(user, mediaType);
+      if (mediaType === "video") {
+        const remoteContainer = document.createElement("div");
+        remoteContainer.id = user.uid;
+        remoteContainer.className = "video-player";
+        document.getElementById("video-container").appendChild(remoteContainer);
+        user.videoTrack.play(remoteContainer);
+      }
+      if (mediaType === "audio") {
+        user.audioTrack.play();
+      }
+    });
+
+    client.on("user-unpublished", (user) => {
+      const remoteContainer = document.getElementById(user.uid);
+      if (remoteContainer) remoteContainer.remove();
+    });
+
+    document.getElementById("leave-btn").onclick = async () => {
+      localAudioTrack?.close();
+      localVideoTrack?.close();
+      await client.leave();
+      document.getElementById("video-container").innerHTML = '<div id="local-player" class="video-player"></div>';
+      document.getElementById("join-btn").style.display = "inline-block";
+      document.getElementById("leave-btn").style.display = "none";
+    };
+  </script>
+</body>
+</html>
+EOF
+  
