@@ -2549,7 +2549,66 @@ db.collection('posts').where('authorId', '==', currentUser.uid).onSnapshot(snap 
                 closeModal('other-profile-modal');
             }
         }
+    // --- YANYANA BİLDİRİM SİSTEMİ ---
+document.addEventListener('DOMContentLoaded', () => {
+    const LocalNotifications = window.Capacitor ? window.Capacitor.Plugins.LocalNotifications : null;
+    
+    if (LocalNotifications) {
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    // 1. İzinleri kontrol et ve iste
+                    let permStatus = await LocalNotifications.checkPermissions();
+                    if (permStatus.display !== 'granted') {
+                        await LocalNotifications.requestPermissions();
+                    }
 
+                    // 2. Bildirim kanalını oluştur (Ses ve Ekran Üstü için)
+                    await LocalNotifications.createChannel({
+                        id: 'yanyana_bildirim',
+                        name: 'YanYana Bildirimleri',
+                        description: 'Yeni mesaj ve etkileşim bildirimleri',
+                        importance: 5, // Ekranın üstünde çıkması için en yüksek öncelik
+                        visibility: 1,
+                        sound: 'default',
+                        vibration: true
+                    });
+
+                    // 3. Yeni bildirimleri dinle
+                    let lastNotificationId = null;
+                    db.collection('notifications')
+                        .where('toUser', '==', user.uid)
+                        .where('read', '==', false)
+                        .orderBy('createdAt', 'desc')
+                        .limit(1)
+                        .onSnapshot(snapshot => {
+                            if (!snapshot.empty) {
+                                const doc = snapshot.docs[0];
+                                const data = doc.data();
+                                
+                                if (doc.id !== lastNotificationId) {
+                                    lastNotificationId = doc.id;
+                                    
+                                    LocalNotifications.schedule({
+                                        notifications: [{
+                                            title: data.title || 'YanYana',
+                                            body: data.message || data.text || 'Yeni bir bildirimin var!',
+                                            id: Math.floor(Math.random() * 100000),
+                                            channelId: 'yanyana_bildirim',
+                                            smallIcon: 'ic_stat_icon_config_sample',
+                                            sound: 'default'
+                                        }]
+                                    });
+                                }
+                            }
+                        });
+                } catch(e) {
+                    console.log("Bildirim hatası:", e);
+                }
+            }
+        });
+    }
+});
     </script>
 </body>
 </html>
