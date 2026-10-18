@@ -1562,7 +1562,8 @@
             const container = document.getElementById('incoming-requests-container');
             const list = document.getElementById('incoming-list');
             
-            db.collection('message_requests').where('to', '==', currentUser.uid).where('status', '==', 'pending').onSnapshot(snap => {
+            if (!currentUser) return;
+db.collection('posts').where('authorId', '==', currentUser.uid).onSnapshot(snap => {
                 list.innerHTML = '';
                 if(snap.empty) {
                     container.style.display = 'none';
