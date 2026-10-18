@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">YanYana</string>
+    <string name="title_activity_main">YanYana</string>
+    <string name="package_name">com.yanyana.sohbet</string>
+    <string name="custom_url_scheme">com.yanyana.sohbet</string>
+</resources>
