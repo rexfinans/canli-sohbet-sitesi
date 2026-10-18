@@ -969,7 +969,9 @@
             if(currentUser) {
                 db.collection('users').doc(currentUser.uid).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(e=>{});
             }
-            auth.signOut(); closeModal('settings-modal'); showScreen('screen-onboarding'); 
+       auth.signOut().then(() => {
+    window.location.href = window.location.href; // Sayfayı sıfırla, tüm arka plan kodları temizlensin
+}); 
         }
 
         function deleteAccount() { 
