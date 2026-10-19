@@ -1433,6 +1433,7 @@
                     });
 
                     loadStories(); loadPosts(); listenNotifications(); listenMessageRequestBadge();
+                    setTimeout(() => setupLocalNotifications(), 1500);
                     setInterval(() => { if(currentUser) db.collection('users').doc(currentUser.uid).update({ lastSeen: firebase.firestore.FieldValue.serverTimestamp() }).catch(e=>{}); }, 30000);
                 } else {
                     currentUser = null; currentUserData = null; previousVipStatus = false; isLoggedIn = false;
@@ -2635,7 +2636,64 @@
                 if(badge) { if(snap.size > 0) { badge.style.display = 'flex'; badge.innerText = snap.size; playSound('notifSound', 0.1); } else badge.style.display = 'none'; }
             });
         }
+        /* ============ YEREL BİLDİRİM (ANDROID) ============ */
+function setupLocalNotifications() {
+    if (!window.Capacitor || !window.Capacitor.Plugins.LocalNotifications) return;
+    const LN = window.Capacitor.Plugins.LocalNotifications;
+    
+    LN.requestPermissions().then(() => {
+        LN.createChannel({
+            id: 'yanyana_bildirim',
+            name: 'YanYana Bildirimleri',
+            description: 'Mesaj ve etkileşim bildirimleri',
+            importance: 5,
+            visibility: 1,
+            sound: 'default',
+            vibration: true
+        });
+    });
+    
+    if (!currentUser) return;
+    let lastNotifId = null;
+    db.collection('notifications')
+        .where('toUser', '==', currentUser.uid)
+        .where('read', '==', false)
+        .orderBy('createdAt', 'desc')
+        .limit(1)
+        .onSnapshot(snap => {
+            if (snap.empty) return;
+            const doc = snap.docs[0];
+            const data = doc.data();
+            if (doc.id === lastNotifId) return;
+            lastNotifId = doc.id;
+            
+            // Gönderen kişinin avatarını bul
+            let largeIcon = null;
+            if (data.fromUser && data.fromUser !== 'system') {
+                db.collection('users').doc(data.fromUser).get().then(uDoc => {
+                    if (uDoc.exists && uDoc.data().avatarUrl) {
+                        largeIcon = uDoc.data().avatarUrl;
+                    }
+                    sendAndroidNotif(data, largeIcon);
+                });
+            } else {
+                sendAndroidNotif(data, null);
+            }
+        });
+}
 
+function sendAndroidNotif(data, largeIcon) {
+    const LN = window.Capacitor.Plugins.LocalNotifications;
+    const notif = {
+        title: data.title || 'YanYana',
+        body: data.message || data.text || 'Yeni bildirimin var',
+        id: Math.floor(Math.random() * 100000),
+        channelId: 'yanyana_bildirim',
+        sound: 'default'
+    };
+    if (largeIcon) notif.largeIcon = largeIcon;
+    LN.schedule({ notifications: [notif] });
+}
         function loadNotifications() {
             if(!currentUser) return;
             if(unsubNotifsList) unsubNotifsList();
