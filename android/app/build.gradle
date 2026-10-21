@@ -6,7 +6,7 @@ if (keystorePropertiesFile.exists()) {
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.veloliv.app"
+    namespace = "com.yanyana.sohbet"
 
     signingConfigs {
         release {
@@ -22,7 +22,7 @@ android {
     compileSdk = rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "com.veloliv.app"
+        applicationId "com.yanyana.sohbet"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
