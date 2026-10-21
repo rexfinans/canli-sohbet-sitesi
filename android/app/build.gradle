@@ -6,7 +6,7 @@ if (keystorePropertiesFile.exists()) {
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.yanyana.sohbet"
+    namespace = "com.veloliv.app"
 
     signingConfigs {
         release {
@@ -20,9 +20,9 @@ android {
     }
 
     compileSdk = rootProject.ext.compileSdkVersion
-    
+
     defaultConfig {
-        applicationId "com.yanyana.sohbet"
+        applicationId "com.veloliv.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -32,7 +32,7 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
-    
+
     buildTypes {
         release {
             signingConfig signingConfigs.release
